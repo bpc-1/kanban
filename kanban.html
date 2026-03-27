@@ -590,7 +590,7 @@ const useFallback = !isElectron && (!window.showOpenFilePicker || window.locatio
 // ═══════════════════════════════════════════════════════════════
 async function deriveKey(pwd,salt){
   const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pwd),'PBKDF2',false,['deriveKey']);
-  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
 async function encryptState(data,pwd){
   const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
@@ -848,7 +848,9 @@ document.getElementById('btnConfirmSetup').onclick=async()=>{
   const err=document.getElementById('sfErr');
   if(!pwd){err.textContent='Enter a password.';err.classList.remove('hidden');return;}
   if(pwd!==conf){err.textContent='Passwords do not match.';err.classList.remove('hidden');return;}
-  if(pwd.length<6){err.textContent='Minimum 6 characters.';err.classList.remove('hidden');return;}
+  if(pwd.length<10){err.textContent='Minimum 10 characters.';err.classList.remove('hidden');return;}
+  const pwdScore=(pwd.length>=12?1:0)+(/[A-Z]/.test(pwd)?1:0)+(/[0-9]/.test(pwd)?1:0)+(/[^a-zA-Z0-9]/.test(pwd)?1:0);
+  if(pwdScore<=1){err.textContent='Password is too weak — add uppercase letters, numbers, or symbols.';err.classList.remove('hidden');return;}
   err.classList.add('hidden');
   try{
     if(useFallback){
@@ -1553,7 +1555,9 @@ document.getElementById('btnConfirmChangePw').onclick=async()=>{
   err.classList.add('hidden');
   if(cur!==password){err.textContent='Current password is incorrect.';err.classList.remove('hidden');document.getElementById('cpCurrent').select();return;}
   if(!nw){err.textContent='Enter a new password.';err.classList.remove('hidden');return;}
-  if(nw.length<6){err.textContent='Minimum 6 characters.';err.classList.remove('hidden');return;}
+  if(nw.length<10){err.textContent='Minimum 10 characters.';err.classList.remove('hidden');return;}
+  const newScore=(nw.length>=12?1:0)+(/[A-Z]/.test(nw)?1:0)+(/[0-9]/.test(nw)?1:0)+(/[^a-zA-Z0-9]/.test(nw)?1:0);
+  if(newScore<=1){err.textContent='Password is too weak — add uppercase letters, numbers, or symbols.';err.classList.remove('hidden');return;}
   if(nw!==conf){err.textContent='Passwords do not match.';err.classList.remove('hidden');return;}
   const btn=document.getElementById('btnConfirmChangePw');
   document.getElementById('cpBtnTxt').innerHTML='<span class="spinner"></span>';btn.disabled=true;
